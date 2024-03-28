@@ -120,53 +120,59 @@ See documentation for descriptions of each column being scaled.
 """
 function scale_vre_stor_data!(vre_stor_in::DataFrame, scale_factor::Float64)
     columns_to_scale = [:existing_cap_inverter_mw,
-        :existing_cap_solar_mw,
-        :existing_cap_wind_mw,
-        :existing_cap_charge_dc_mw,
-        :existing_cap_charge_ac_mw,
-        :existing_cap_discharge_dc_mw,
-        :existing_cap_discharge_ac_mw,
-        :min_cap_inverter_mw,
-        :max_cap_inverter_mw,
-        :min_cap_solar_mw,
-        :max_cap_solar_mw,
-        :min_cap_wind_mw,
-        :max_cap_wind_mw,
-        :min_cap_charge_ac_mw,
-        :max_cap_charge_ac_mw,
-        :min_cap_charge_dc_mw,
-        :max_cap_charge_dc_mw,
-        :min_cap_discharge_ac_mw,
-        :max_cap_discharge_ac_mw,
-        :min_cap_discharge_dc_mw,
-        :max_cap_discharge_dc_mw,
-        :inv_cost_inverter_per_mwyr,
-        :fixed_om_inverter_cost_per_mwyr,
-        :inv_cost_solar_per_mwyr,
-        :fixed_om_solar_cost_per_mwyr,
-        :inv_cost_wind_per_mwyr,
-        :fixed_om_wind_cost_per_mwyr,
-        :inv_cost_discharge_dc_per_mwyr,
-        :fixed_om_cost_discharge_dc_per_mwyr,
-        :inv_cost_charge_dc_per_mwyr,
-        :fixed_om_cost_charge_dc_per_mwyr,
-        :inv_cost_discharge_ac_per_mwyr,
-        :fixed_om_cost_discharge_ac_per_mwyr,
-        :inv_cost_charge_ac_per_mwyr,
-        :fixed_om_cost_charge_ac_per_mwyr,
-        :var_om_cost_per_mwh_solar,
-        :var_om_cost_per_mwh_wind,
-        :var_om_cost_per_mwh_charge_dc,
-        :var_om_cost_per_mwh_discharge_dc,
-        :var_om_cost_per_mwh_charge_ac,
-        :var_om_cost_per_mwh_discharge_ac,
-        :min_retired_cap_inverter_mw,
-        :min_retired_cap_solar_mw,
-        :min_retired_cap_wind_mw,
-        :min_retired_cap_charge_dc_mw,
-        :min_retired_cap_charge_ac_mw,
-        :min_retired_cap_discharge_dc_mw,
-        :min_retired_cap_discharge_ac_mw]
+                        :existing_cap_solar_mw,
+                        :existing_cap_wind_mw,
+                        :existing_cap_elec_mw,
+                        :existing_cap_charge_dc_mw,
+                        :existing_cap_charge_ac_mw,
+                        :existing_cap_discharge_dc_mw,
+                        :existing_cap_discharge_ac_mw,
+                        :min_cap_inverter_mw,
+                        :max_cap_inverter_mw,
+                        :min_cap_solar_mw,
+                        :max_cap_solar_mw,
+                        :min_cap_wind_mw,
+                        :max_cap_wind_mw,
+                        :min_cap_elec_mw,
+                        :max_cap_elec_mw,
+                        :min_cap_charge_ac_mw,
+                        :max_cap_charge_ac_mw,
+                        :min_cap_charge_dc_mw,
+                        :max_cap_charge_dc_mw,
+                        :min_cap_discharge_ac_mw,
+                        :max_cap_discharge_ac_mw,
+                        :min_cap_discharge_dc_mw,
+                        :max_cap_discharge_dc_mw,
+                        :inv_cost_inverter_per_mwyr,
+                        :fixed_om_inverter_cost_per_mwyr,
+                        :inv_cost_solar_per_mwyr,
+                        :fixed_om_solar_cost_per_mwyr,
+                        :inv_cost_wind_per_mwyr,
+                        :fixed_om_wind_cost_per_mwyr,
+                        :inv_cost_elec_per_mwyr,
+                        :fixed_om_elec_cost_per_mwyr,
+                        :inv_cost_discharge_dc_per_mwyr,
+                        :fixed_om_cost_discharge_dc_per_mwyr,
+                        :inv_cost_charge_dc_per_mwyr,
+                        :fixed_om_cost_charge_dc_per_mwyr,
+                        :inv_cost_discharge_ac_per_mwyr,
+                        :fixed_om_cost_discharge_ac_per_mwyr,
+                        :inv_cost_charge_ac_per_mwyr,
+                        :fixed_om_cost_charge_ac_per_mwyr,
+                        :var_om_cost_per_mwh_solar,
+                        :var_om_cost_per_mwh_wind,
+                        :var_om_cost_per_mwh_charge_dc,
+                        :var_om_cost_per_mwh_discharge_dc,
+                        :var_om_cost_per_mwh_charge_ac,
+                        :var_om_cost_per_mwh_discharge_ac,
+                        :min_retired_cap_inverter_mw,
+                        :min_retired_cap_solar_mw,
+                        :min_retired_cap_wind_mw,
+                        :min_retired_cap_elec_mw,
+                        :min_retired_cap_charge_dc_mw,
+                        :min_retired_cap_charge_ac_mw,
+                        :min_retired_cap_discharge_dc_mw,
+                        :min_retired_cap_discharge_ac_mw]
     scale_columns!(vre_stor_in, columns_to_scale, scale_factor)
     return nothing
 end
@@ -1134,6 +1140,9 @@ function add_resources_to_input_data!(inputs::Dict,
         # Solar PV Resources
         inputs["VS_SOLAR"] = solar(gen)
 
+        # Electrolyzer Resources
+        inputs["VS_ELEC"] = elec(gen)
+
         # DC Resources
         inputs["VS_DC"] = union(storage_dc_discharge(gen),
             storage_dc_charge(gen),
@@ -1159,9 +1168,11 @@ function add_resources_to_input_data!(inputs::Dict,
             wind(gen),
             ids_with(gen_VRE_STOR, max_cap_wind_mw))
         # Set of all VRE_STOR resources eligible for wind capacity retirements
-        inputs["RET_CAP_WIND"] = intersect(retirable,
-            wind(gen),
-            ids_with_nonneg(gen_VRE_STOR, existing_cap_wind_mw))
+        inputs["RET_CAP_WIND"] = intersect(retirable, wind(gen), ids_with_nonneg(gen_VRE_STOR, existing_cap_wind_mw))
+        # Set of all VRE-STOR resources eligible for new electrolyzer capacity
+        inputs["NEW_CAP_ELEC"] = intersect(buildable, elec(gen), ids_with(gen_VRE_STOR, max_cap_elec_mw))
+        # Set of all VRE_STOR resources eligible for electrolyzer capacity retirements
+        inputs["RET_CAP_ELEC"] = intersect(retirable, elec(gen), ids_with_nonneg(gen_VRE_STOR, existing_cap_elec_mw))
         # Set of all VRE-STOR resources eligible for new inverter capacity
         inputs["NEW_CAP_DC"] = intersect(buildable,
             ids_with(gen_VRE_STOR, max_cap_inverter_mw),
@@ -1219,6 +1230,7 @@ function add_resources_to_input_data!(inputs::Dict,
         # Names for writing outputs
         inputs["RESOURCE_NAMES_SOLAR"] = resource_name(gen[inputs["VS_SOLAR"]])
         inputs["RESOURCE_NAMES_WIND"] = resource_name(gen[inputs["VS_WIND"]])
+        inputs["RESOURCE_NAMES_ELEC"] = resource_name(gen[inputs["VS_ELEC"]])
         inputs["RESOURCE_NAMES_DC_DISCHARGE"] = resource_name(gen[storage_dc_discharge(gen)])
         inputs["RESOURCE_NAMES_AC_DISCHARGE"] = resource_name(gen[storage_ac_discharge(gen)])
         inputs["RESOURCE_NAMES_DC_CHARGE"] = resource_name(gen[storage_dc_charge(gen)])
@@ -1226,6 +1238,7 @@ function add_resources_to_input_data!(inputs::Dict,
 
         inputs["ZONES_SOLAR"] = zone_id(gen[inputs["VS_SOLAR"]])
         inputs["ZONES_WIND"] = zone_id(gen[inputs["VS_WIND"]])
+        inputs["ZONES_ELEC"] = zone_id(gen[inputs["VS_ELEC"]])
         inputs["ZONES_DC_DISCHARGE"] = zone_id(gen[storage_dc_discharge(gen)])
         inputs["ZONES_AC_DISCHARGE"] = zone_id(gen[storage_ac_discharge(gen)])
         inputs["ZONES_DC_CHARGE"] = zone_id(gen[storage_dc_charge(gen)])

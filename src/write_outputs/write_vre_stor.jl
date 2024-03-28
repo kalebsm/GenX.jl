@@ -26,13 +26,14 @@ function write_vre_stor_capacity(path::AbstractString, inputs::Dict, setup::Dict
     gen = inputs["RESOURCES"]
     gen_VRE_STOR = gen.VreStorage
 
-    VRE_STOR = inputs["VRE_STOR"]
-    SOLAR = inputs["VS_SOLAR"]
-    WIND = inputs["VS_WIND"]
-    DC = inputs["VS_DC"]
-    STOR = inputs["VS_STOR"]
-    MultiStage = setup["MultiStage"]
-    size_vrestor_resources = size(inputs["RESOURCE_NAMES_VRE_STOR"])
+	VRE_STOR = inputs["VRE_STOR"]
+	SOLAR = inputs["VS_SOLAR"]
+	WIND = inputs["VS_WIND"]
+	ELEC = inputs["VS_ELEC"]
+	DC = inputs["VS_DC"]
+	STOR = inputs["VS_STOR"]
+	MultiStage = setup["MultiStage"]
+	size_vrestor_resources = size(inputs["RESOURCE_NAMES_VRE_STOR"])
 
     # Solar capacity
     capsolar = zeros(size_vrestor_resources)
@@ -44,10 +45,15 @@ function write_vre_stor_capacity(path::AbstractString, inputs::Dict, setup::Dict
     retcapwind = zeros(size_vrestor_resources)
     existingcapwind = zeros(size_vrestor_resources)
 
-    # Inverter capacity
-    capdc = zeros(size_vrestor_resources)
-    retcapdc = zeros(size_vrestor_resources)
-    existingcapdc = zeros(size_vrestor_resources)
+	# Electrolyzer capacity
+	capelec = zeros(size_vrestor_resources)
+	retcapelec = zeros(size_vrestor_resources)
+	existingcapelec = zeros(size_vrestor_resources)
+
+	# Inverter capacity
+	capdc = zeros(size_vrestor_resources)
+	retcapdc = zeros(size_vrestor_resources)
+	existingcapdc = zeros(size_vrestor_resources)
 
     # Grid connection capacity
     capgrid = zeros(size_vrestor_resources)
@@ -101,16 +107,25 @@ function write_vre_stor_capacity(path::AbstractString, inputs::Dict, setup::Dict
             end
         end
 
-        if i in WIND
-            existingcapwind[j] = MultiStage == 1 ? value(EP[:vEXISTINGWINDCAP][i]) :
-                                 existing_cap_wind_mw(gen_VRE_STOR[j])
-            if i in inputs["NEW_CAP_WIND"]
-                capwind[j] = value(EP[:vWINDCAP][i])
-            end
-            if i in inputs["RET_CAP_WIND"]
-                retcapwind[j] = first(value.(EP[:vRETWINDCAP][i]))
-            end
-        end
+		if i in WIND
+			existingcapwind[j] = MultiStage == 1 ? value(EP[:vEXISTINGWINDCAP][i]) : existing_cap_wind_mw(gen_VRE_STOR[j])
+			if i in inputs["NEW_CAP_WIND"]
+				capwind[j] = value(EP[:vWINDCAP][i])
+			end
+			if i in inputs["RET_CAP_WIND"]
+				retcapwind[j] = first(value.(EP[:vRETWINDCAP][i]))
+			end
+		end
+		
+		if i in ELEC
+			existingcapelec[j] = MultiStage == 1 ? value(EP[:vEXISTINGELECCAP][i]) : existing_cap_elec_mw(gen_VRE_STOR[j])
+			if i in inputs["NEW_CAP_ELEC"]
+				capelec[j] = value(EP[:vELECCAP][i])
+			end
+			if i in inputs["RET_CAP_ELEC"]
+				retcapelec[j] = first(value.(EP[:vRETELECCAP][i]))
+			end
+		end
 
         if i in DC
             existingcapdc[j] = MultiStage == 1 ? value(EP[:vEXISTINGDCCAP][i]) :
@@ -185,123 +200,119 @@ function write_vre_stor_capacity(path::AbstractString, inputs::Dict, setup::Dict
     clusters = cluster.(gen_VRE_STOR)
     zones = zone_id.(gen_VRE_STOR)
 
-    dfCap = DataFrame(Resource = inputs["RESOURCE_NAMES_VRE_STOR"], Zone = zones,
-        Resource_Type = technologies, Cluster = clusters,
-        StartCapSolar = existingcapsolar[:],
-        RetCapSolar = retcapsolar[:],
-        NewCapSolar = capsolar[:],
-        EndCapSolar = existingcapsolar[:] - retcapsolar[:] + capsolar[:],
-        StartCapWind = existingcapwind[:],
-        RetCapWind = retcapwind[:],
-        NewCapWind = capwind[:],
-        EndCapWind = existingcapwind[:] - retcapwind[:] + capwind[:],
-        StartCapDC = existingcapdc[:],
-        RetCapDC = retcapdc[:],
-        NewCapDC = capdc[:],
-        EndCapDC = existingcapdc[:] - retcapdc[:] + capdc[:],
-        StartCapGrid = existingcapgrid[:],
-        RetCapGrid = retcapgrid[:],
-        NewCapGrid = capgrid[:],
-        EndCapGrid = existingcapgrid[:] - retcapgrid[:] + capgrid[:],
-        StartEnergyCap = existingcapenergy[:],
-        RetEnergyCap = retcapenergy[:],
-        NewEnergyCap = capenergy[:],
-        EndEnergyCap = existingcapenergy[:] - retcapenergy[:] + capenergy[:],
-        StartChargeDCCap = existingcapchargedc[:],
-        RetChargeDCCap = retcapchargedc[:],
-        NewChargeDCCap = capchargedc[:],
-        EndChargeDCCap = existingcapchargedc[:] - retcapchargedc[:] + capchargedc[:],
-        StartChargeACCap = existingcapchargeac[:],
-        RetChargeACCap = retcapchargeac[:],
-        NewChargeACCap = capchargeac[:],
-        EndChargeACCap = existingcapchargeac[:] - retcapchargeac[:] + capchargeac[:],
-        StartDischargeDCCap = existingcapdischargedc[:],
-        RetDischargeDCCap = retcapdischargedc[:],
-        NewDischargeDCCap = capdischargedc[:],
-        EndDischargeDCCap = existingcapdischargedc[:] - retcapdischargedc[:] +
-                            capdischargedc[:],
-        StartDischargeACCap = existingcapdischargeac[:],
-        RetDischargeACCap = retcapdischargeac[:],
-        NewDischargeACCap = capdischargeac[:],
-        EndDischargeACCap = existingcapdischargeac[:] - retcapdischargeac[:] +
-                            capdischargeac[:])
+	dfCap = DataFrame(
+		Resource = inputs["RESOURCE_NAMES_VRE_STOR"], Zone = zones, Resource_Type = technologies, Cluster=clusters, 
+		StartCapSolar = existingcapsolar[:],
+		RetCapSolar = retcapsolar[:],
+		NewCapSolar = capsolar[:],
+		EndCapSolar = existingcapsolar[:] - retcapsolar[:] + capsolar[:],
+		StartCapWind = existingcapwind[:],
+		RetCapWind = retcapwind[:],
+		NewCapWind = capwind[:],
+		EndCapWind = existingcapwind[:] - retcapwind[:] + capwind[:],
+		StartCapElec = existingcapelec[:],
+		RetCapElec = retcapelec[:],
+		NewCapElec = capelec[:],
+		EndCapElec = existingcapelec[:] - retcapelec[:] + capelec[:],
+		StartCapDC = existingcapdc[:],
+		RetCapDC = retcapdc[:],
+		NewCapDC = capdc[:],
+		EndCapDC = existingcapdc[:] - retcapdc[:] + capdc[:],
+		StartCapGrid = existingcapgrid[:],
+		RetCapGrid = retcapgrid[:],
+		NewCapGrid = capgrid[:],
+		EndCapGrid = existingcapgrid[:] - retcapgrid[:] + capgrid[:],
+		StartEnergyCap = existingcapenergy[:],
+		RetEnergyCap = retcapenergy[:],
+		NewEnergyCap = capenergy[:],
+		EndEnergyCap = existingcapenergy[:] - retcapenergy[:] + capenergy[:],
+		StartChargeDCCap = existingcapchargedc[:],
+		RetChargeDCCap = retcapchargedc[:],
+		NewChargeDCCap = capchargedc[:],
+		EndChargeDCCap = existingcapchargedc[:] - retcapchargedc[:] + capchargedc[:],
+		StartChargeACCap = existingcapchargeac[:],
+		RetChargeACCap = retcapchargeac[:],
+		NewChargeACCap = capchargeac[:],
+		EndChargeACCap = existingcapchargeac[:] - retcapchargeac[:] + capchargeac[:],
+		StartDischargeDCCap = existingcapdischargedc[:],
+		RetDischargeDCCap = retcapdischargedc[:],
+		NewDischargeDCCap = capdischargedc[:],
+		EndDischargeDCCap = existingcapdischargedc[:] - retcapdischargedc[:] + capdischargedc[:],
+		StartDischargeACCap = existingcapdischargeac[:],
+		RetDischargeACCap = retcapdischargeac[:],
+		NewDischargeACCap = capdischargeac[:],
+		EndDischargeACCap = existingcapdischargeac[:] - retcapdischargeac[:] + capdischargeac[:]
+	)
 
-    if setup["ParameterScale"] == 1
-        columns_to_scale = [
-            :StartCapSolar,
-            :RetCapSolar,
-            :NewCapSolar,
-            :EndCapSolar,
-            :StartCapWind,
-            :RetCapWind,
-            :NewCapWind,
-            :EndCapWind,
-            :StartCapDC,
-            :RetCapDC,
-            :NewCapDC,
-            :EndCapDC,
-            :StartCapGrid,
-            :RetCapGrid,
-            :NewCapGrid,
-            :EndCapGrid,
-            :StartEnergyCap,
-            :RetEnergyCap,
-            :NewEnergyCap,
-            :EndEnergyCap,
-            :StartChargeACCap,
-            :RetChargeACCap,
-            :NewChargeACCap,
-            :EndChargeACCap,
-            :StartChargeDCCap,
-            :RetChargeDCCap,
-            :NewChargeDCCap,
-            :EndChargeDCCap,
-            :StartDischargeDCCap,
-            :RetDischargeDCCap,
-            :NewDischargeDCCap,
-            :EndDischargeDCCap,
-            :StartDischargeACCap,
-            :RetDischargeACCap,
-            :NewDischargeACCap,
-            :EndDischargeACCap,
-        ]
-        dfCap[!, columns_to_scale] .*= ModelScalingFactor
-    end
+	if setup["ParameterScale"] ==1
+		columns_to_scale = [
+			:StartCapSolar,
+			:RetCapSolar,
+			:NewCapSolar,
+			:EndCapSolar,
+			:StartCapWind,
+			:RetCapWind,
+			:NewCapWind,
+			:EndCapWind,
+			:StartCapElec,
+			:RetCapElec,
+			:NewCapElec,
+			:EndCapElec,
+			:StartCapDC,
+			:RetCapDC,
+			:NewCapDC,
+			:EndCapDC,
+			:StartCapGrid,
+			:RetCapGrid,
+			:NewCapGrid,
+			:EndCapGrid,
+			:StartEnergyCap,
+			:RetEnergyCap,
+			:NewEnergyCap,
+			:EndEnergyCap,
+			:StartChargeACCap,
+			:RetChargeACCap,
+			:NewChargeACCap,
+			:EndChargeACCap,
+			:StartChargeDCCap,
+			:RetChargeDCCap,
+			:NewChargeDCCap,
+			:EndChargeDCCap,
+			:StartDischargeDCCap,
+			:RetDischargeDCCap,
+			:NewDischargeDCCap,
+			:EndDischargeDCCap,
+			:StartDischargeACCap,
+			:RetDischargeACCap,
+			:NewDischargeACCap,
+			:EndDischargeACCap,
+		]
+		dfCap[!, columns_to_scale] .*= ModelScalingFactor
+	end
 
-    total = DataFrame(Resource = "Total", Zone = "n/a", Resource_Type = "Total",
-        Cluster = "n/a",
-        StartCapSolar = sum(dfCap[!, :StartCapSolar]),
-        RetCapSolar = sum(dfCap[!, :RetCapSolar]),
-        NewCapSolar = sum(dfCap[!, :NewCapSolar]),
-        EndCapSolar = sum(dfCap[!, :EndCapSolar]),
-        StartCapWind = sum(dfCap[!, :StartCapWind]),
-        RetCapWind = sum(dfCap[!, :RetCapWind]),
-        NewCapWind = sum(dfCap[!, :NewCapWind]), EndCapWind = sum(dfCap[!, :EndCapWind]),
-        StartCapDC = sum(dfCap[!, :StartCapDC]), RetCapDC = sum(dfCap[!, :RetCapDC]),
-        NewCapDC = sum(dfCap[!, :NewCapDC]), EndCapDC = sum(dfCap[!, :EndCapDC]),
-        StartCapGrid = sum(dfCap[!, :StartCapGrid]),
-        RetCapGrid = sum(dfCap[!, :RetCapGrid]),
-        NewCapGrid = sum(dfCap[!, :NewCapGrid]), EndCapGrid = sum(dfCap[!, :EndCapGrid]),
-        StartEnergyCap = sum(dfCap[!, :StartEnergyCap]),
-        RetEnergyCap = sum(dfCap[!, :RetEnergyCap]),
-        NewEnergyCap = sum(dfCap[!, :NewEnergyCap]),
-        EndEnergyCap = sum(dfCap[!, :EndEnergyCap]),
-        StartChargeACCap = sum(dfCap[!, :StartChargeACCap]),
-        RetChargeACCap = sum(dfCap[!, :RetChargeACCap]),
-        NewChargeACCap = sum(dfCap[!, :NewChargeACCap]),
-        EndChargeACCap = sum(dfCap[!, :EndChargeACCap]),
-        StartChargeDCCap = sum(dfCap[!, :StartChargeDCCap]),
-        RetChargeDCCap = sum(dfCap[!, :RetChargeDCCap]),
-        NewChargeDCCap = sum(dfCap[!, :NewChargeDCCap]),
-        EndChargeDCCap = sum(dfCap[!, :EndChargeDCCap]),
-        StartDischargeDCCap = sum(dfCap[!, :StartDischargeDCCap]),
-        RetDischargeDCCap = sum(dfCap[!, :RetDischargeDCCap]),
-        NewDischargeDCCap = sum(dfCap[!, :NewDischargeDCCap]),
-        EndDischargeDCCap = sum(dfCap[!, :EndDischargeDCCap]),
-        StartDischargeACCap = sum(dfCap[!, :StartDischargeACCap]),
-        RetDischargeACCap = sum(dfCap[!, :RetDischargeACCap]),
-        NewDischargeACCap = sum(dfCap[!, :NewDischargeACCap]),
-        EndDischargeACCap = sum(dfCap[!, :EndDischargeACCap]))
+	total = DataFrame(
+		Resource = "Total", Zone = "n/a", Resource_Type = "Total", Cluster= "n/a", 
+		StartCapSolar = sum(dfCap[!,:StartCapSolar]), RetCapSolar = sum(dfCap[!,:RetCapSolar]),
+		NewCapSolar = sum(dfCap[!,:NewCapSolar]), EndCapSolar = sum(dfCap[!,:EndCapSolar]),
+		StartCapWind = sum(dfCap[!,:StartCapWind]), RetCapWind = sum(dfCap[!,:RetCapWind]),
+		NewCapWind = sum(dfCap[!,:NewCapWind]), EndCapWind = sum(dfCap[!,:EndCapWind]),
+		StartCapElec = sum(dfCap[!,:StartCapElec]), RetCapElec = sum(dfCap[!,:RetCapElec]),
+		NewCapElec = sum(dfCap[!,:NewCapElec]), EndCapElec = sum(dfCap[!,:EndCapElec]),
+		StartCapDC = sum(dfCap[!,:StartCapDC]), RetCapDC = sum(dfCap[!,:RetCapDC]),
+		NewCapDC = sum(dfCap[!,:NewCapDC]), EndCapDC = sum(dfCap[!,:EndCapDC]),
+		StartCapGrid = sum(dfCap[!,:StartCapGrid]), RetCapGrid = sum(dfCap[!,:RetCapGrid]),
+		NewCapGrid = sum(dfCap[!,:NewCapGrid]), EndCapGrid = sum(dfCap[!,:EndCapGrid]),
+		StartEnergyCap = sum(dfCap[!,:StartEnergyCap]), RetEnergyCap = sum(dfCap[!,:RetEnergyCap]),
+		NewEnergyCap = sum(dfCap[!,:NewEnergyCap]), EndEnergyCap = sum(dfCap[!,:EndEnergyCap]),
+		StartChargeACCap = sum(dfCap[!,:StartChargeACCap]), RetChargeACCap = sum(dfCap[!,:RetChargeACCap]),
+		NewChargeACCap = sum(dfCap[!,:NewChargeACCap]), EndChargeACCap = sum(dfCap[!,:EndChargeACCap]),
+		StartChargeDCCap = sum(dfCap[!,:StartChargeDCCap]), RetChargeDCCap = sum(dfCap[!,:RetChargeDCCap]),
+		NewChargeDCCap = sum(dfCap[!,:NewChargeDCCap]), EndChargeDCCap = sum(dfCap[!,:EndChargeDCCap]),
+		StartDischargeDCCap = sum(dfCap[!,:StartDischargeDCCap]), RetDischargeDCCap = sum(dfCap[!,:RetDischargeDCCap]),
+		NewDischargeDCCap = sum(dfCap[!,:NewDischargeDCCap]), EndDischargeDCCap = sum(dfCap[!,:EndDischargeDCCap]),
+		StartDischargeACCap = sum(dfCap[!,:StartDischargeACCap]), RetDischargeACCap = sum(dfCap[!,:RetDischargeACCap]),
+		NewDischargeACCap = sum(dfCap[!,:NewDischargeACCap]), EndDischargeACCap = sum(dfCap[!,:EndDischargeACCap])
+	)
 
     dfCap = vcat(dfCap, total)
     CSV.write(joinpath(path, "vre_stor_capacity.csv"), dfCap)
@@ -373,8 +384,9 @@ function write_vre_stor_discharge(path::AbstractString,
     T = inputs["T"]
     DC_DISCHARGE = inputs["VS_STOR_DC_DISCHARGE"]
     AC_DISCHARGE = inputs["VS_STOR_AC_DISCHARGE"]
-    WIND = inputs["VS_WIND"]
-    SOLAR = inputs["VS_SOLAR"]
+	WIND = inputs["VS_WIND"]
+	SOLAR = inputs["VS_SOLAR"]
+	ELEC = inputs["VS_ELEC"]
 
     # DC discharging of battery dataframe
     if !isempty(DC_DISCHARGE)
@@ -434,17 +446,32 @@ function write_vre_stor_discharge(path::AbstractString,
         end
     end
 
-    # Solar generation of co-located resource dataframe
-    if !isempty(SOLAR)
-        dfVP_VRE_STOR = DataFrame(Resource = inputs["RESOURCE_NAMES_SOLAR"],
-            Zone = inputs["ZONES_SOLAR"],
-            AnnualSum = Array{Union{Missing, Float32}}(undef, size(SOLAR)[1]))
-        vre_vre_stor = value.(EP[:vP_SOLAR]).data .*
-                       etainverter.(gen_VRE_STOR[(gen_VRE_STOR.solar .!= 0)])
-        if setup["ParameterScale"] == 1
-            vre_vre_stor *= ModelScalingFactor
-        end
-        dfVP_VRE_STOR.AnnualSum .= vre_vre_stor * inputs["omega"]
+	# Electrolyzer consumption of co-located resource dataframe
+	if !isempty(ELEC)
+		dfVP_VRE_STOR = DataFrame(Resource = inputs["RESOURCE_NAMES_ELEC"], Zone = inputs["ZONES_ELEC"], AnnualSum = Array{Union{Missing,Float32}}(undef, size(ELEC)[1]))
+		elec_vre_stor = value.(EP[:vP_ELEC]).data 
+		if setup["ParameterScale"] == 1
+			elec_vre_stor *= ModelScalingFactor
+		end
+		dfVP_VRE_STOR.AnnualSum .= elec_vre_stor * inputs["omega"]
+		dfVP_VRE_STOR = hcat(dfVP_VRE_STOR, DataFrame(elec_vre_stor, :auto))
+		auxNew_Names=[Symbol("Resource");Symbol("Zone");Symbol("AnnualSum");[Symbol("t$t") for t in 1:T]]
+		rename!(dfVP_VRE_STOR,auxNew_Names)
+		total = DataFrame(["Total" 0 sum(dfVP_VRE_STOR[!,:AnnualSum]) fill(0.0, (1,T))], :auto)
+		total[:, 4:T+3] .= sum(elec_vre_stor, dims = 1)
+		rename!(total,auxNew_Names)
+		dfVP_VRE_STOR = vcat(dfVP_VRE_STOR, total)
+		CSV.write(joinpath(path,"vre_stor_elec_power_consumption.csv"), dftranspose(dfVP_VRE_STOR, false), writeheader=false)
+	end
+
+	# Solar generation of co-located resource dataframe
+	if !isempty(SOLAR)
+		dfVP_VRE_STOR = DataFrame(Resource = inputs["RESOURCE_NAMES_SOLAR"], Zone = inputs["ZONES_SOLAR"], AnnualSum = Array{Union{Missing,Float32}}(undef, size(SOLAR)[1]))
+		vre_vre_stor = value.(EP[:vP_SOLAR]).data .* etainverter.(gen_VRE_STOR[(gen_VRE_STOR.solar.!=0)])
+		if setup["ParameterScale"] == 1
+			vre_vre_stor *= ModelScalingFactor
+		end
+		dfVP_VRE_STOR.AnnualSum .= vre_vre_stor * inputs["omega"]
 
         filepath = joinpath(path, "vre_stor_solar_power.csv")
         if setup["WriteOutputs"] == "annual"
