@@ -1026,33 +1026,36 @@ end
 
 # Multistage
 for attr in (:capital_recovery_period_dc,
-    :capital_recovery_period_solar,
-    :capital_recovery_period_wind,
-    :capital_recovery_period_charge_dc,
-    :capital_recovery_period_discharge_dc,
-    :capital_recovery_period_charge_ac,
-    :capital_recovery_period_discharge_ac,
-    :tech_wacc_dc,
-    :tech_wacc_solar,
-    :tech_wacc_wind,
-    :tech_wacc_charge_dc,
-    :tech_wacc_discharge_dc,
-    :tech_wacc_charge_ac,
-    :tech_wacc_discharge_ac)
+             :capital_recovery_period_solar,
+             :capital_recovery_period_wind,
+             :capital_recovery_period_elec,
+             :capital_recovery_period_charge_dc,
+             :capital_recovery_period_discharge_dc,
+             :capital_recovery_period_charge_ac,
+             :capital_recovery_period_discharge_ac,
+             :tech_wacc_dc,
+             :tech_wacc_solar,
+             :tech_wacc_wind,
+             :tech_wacc_elec,
+             :tech_wacc_charge_dc,
+             :tech_wacc_discharge_dc,
+             :tech_wacc_charge_ac,
+             :tech_wacc_discharge_ac)
     @eval @interface $attr default_zero VreStorage
 end
 
 # Endogenous retirement
-for attr in (:min_retired_cap_inverter_mw,
-    :min_retired_cap_solar_mw,
-    :min_retired_cap_wind_mw,
-    :min_retired_cap_discharge_dc_mw,
-    :min_retired_cap_charge_dc_mw,
-    :min_retired_cap_discharge_ac_mw,
-    :min_retired_cap_charge_ac_mw)
-    @eval @interface $attr default_zero
-    cum_attr = Symbol("cum_" * String(attr))
-    @eval @interface $cum_attr default_zero
+for attr in (:min_retired_cap_inverter_mw, 
+             :min_retired_cap_solar_mw,
+             :min_retired_cap_wind_mw,
+             :min_retired_cap_elec_mw,
+             :min_retired_cap_discharge_dc_mw,
+             :min_retired_cap_charge_dc_mw,
+             :min_retired_cap_discharge_ac_mw,
+             :min_retired_cap_charge_ac_mw,)
+    @eval @interface $attr default_zero 
+    cum_attr = Symbol("cum_"*String(attr))
+    @eval @interface $cum_attr default_zero 
 end
 
 ## policies
