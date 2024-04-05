@@ -225,6 +225,11 @@ function generate_model(setup::Dict, inputs::Dict, OPTIMIZER::MOI.OptimizerWithA
         maximum_capacity_requirement!(EP, inputs, setup)
     end
 
+	# Hydrogen demand limits
+	if setup["HydrogenMimimumProduction"] > 0
+		hydrogen_demand!(EP, inputs, setup)
+	end
+
     ## Define the objective function
     @objective(EP, Min, setup["ObjScale"]*EP[:eObj])
 
