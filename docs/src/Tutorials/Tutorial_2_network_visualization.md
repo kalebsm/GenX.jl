@@ -2,7 +2,8 @@
 
 [Interactive Notebook of the tutorial](https://github.com/GenXProject/GenX-Tutorials/blob/main/Tutorials/Tutorial_2_Network_Visualization.ipynb)
 
-To run GenX, there are five mandatory input files: `Fuels_data.csv`, `Network.csv`, `Load_data.csv`, `Generators_variability.csv`, and `Generators_data.csv`. Detailed descriptions of these files can be found in the [GenX Inputs](@ref) page of the documentation. This tutorial helps visualize the file `Network.csv` using the example system `example_systems/1_three_zones`.
+To run GenX, there are five mandatory input files: `Fuels_data.csv`, `Network.csv`, `Demand_data.csv`, `Generators_variability.csv`, and `Generators_data.csv` (note that `Network.csv` is not mandatory if running a single-zone model). Detailed descriptions of these files can be found in the [GenX Inputs](@ref) page of the documentation.
+This tutorial helps visualize the file `Network.csv` using the example system `example_systems/1_three_zones`.
 
 
 ```julia
@@ -24,10 +25,9 @@ network = CSV.read("example_systems/1_three_zones/system/Network.csv",DataFrame,
 
 MA, CT, and ME are the abbreviations for states Massachusetts, Connecticut, and Maine. However, since the US region of New England contains other states as well, MA in this case is also used to refer to those states.
 
-Columns `Start_Zone` and `End_Zone` specify the network of the three regions. In this case, there are only two network lines, specified in the `Network_Lines` columns. The `Start_Zone` column indicates that the first node, MA, is the source of both lines as both rows have value 1. Rows `z1` and `z2` have values of 2 and 3 in `End_Zone`, which  means both nodes CT and ME recieve energy from node MA. This is also indicated in the column `transmission_path_name'. 
+Columns `Start_Zone` and `End_Zone` specify the network of the three regions. In this case, there are only two network lines, specified in the `Network_Lines` columns. The `Start_Zone` column indicates that the first node, MA, is the source of both lines as both rows have value 1. Rows `z1` and `z2` have values of 2 and 3 in `End_Zone`, which  means both nodes CT and ME recieve energy from node MA. This is also indicated in the column `transmission path name'. 
 
 Below is a visualization of the network:
 
-```@raw html
-<img src="./files/new_england.png" style="width: 600px; height: auto" >
-```
+![png](./files/new_england.png)
+

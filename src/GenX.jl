@@ -44,6 +44,9 @@ using Gurobi
 #using MOI
 #using SCIP
 using HiGHS
+using Logging
+
+using PrecompileTools: @compile_workload
 
 # Global scaling factor used when ParameterScale is on to shift values from MW to GW
 # DO NOT CHANGE THIS (Unless you do so very carefully)
@@ -78,8 +81,11 @@ include_all_in_folder("write_outputs")
 
 include("time_domain_reduction/time_domain_reduction.jl")
 include("time_domain_reduction/precluster.jl")
+include("time_domain_reduction/full_time_series_reconstruction.jl")
 
 include_all_in_folder("multi_stage")
 include_all_in_folder("additional_tools")
+
+include("startup/genx_startup.jl")
 
 end

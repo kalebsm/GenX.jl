@@ -9,23 +9,19 @@ GenX is easy to customize to fit a variety of problems. In this tutorial, we sho
 There are 21 settings available to edit in GenX, found in the file `genx_settings.yml`. These settings are described at the [Model settings parameters
 ](@ref) page of the documentation. The file is located in the `settings` folder in the working directory. To change the location of the file, edit the `settings_path` variable in `Run.jl` within your directory.
 
-Most settings are set as either 0 or 1, which correspond to whether or not to include a specifc feature. For example, to use `TimeDomainReduction`, you would set its parameter to 0 within `genx_settings.yml`. If you would like to run GenX without it, you would set its parameter to 1.
+Most settings are set as either 0 or 1, which correspond to whether or not to include a specific feature. For example, to use `TimeDomainReduction`, you would set its parameter to 0 within `genx_settings.yml`. If you would like to run GenX without it, you would set its parameter to 1.
 
-Other settings, such as `CO2Cap`, have more options corresponding to integers, while some settings such as `ModelingtoGenerateAlternativeSlack` take a numerical input directly (in this case, the slack value). Two settings, `Solver` and `TimeDomainReductionFolder` take in text as input. To learn more about different solvers, read here. For `TimeDomainReductionFolder`, specify the name of the directory you wish to see the results in. For a more comprehensive description of the input options, see the documentation linked above.
+Other settings, such as `CO2Cap`, have more options corresponding to integers, while some settings such as `ModelingtoGenerateAlternativeSlack` take a numerical input directly (in this case, the slack value). Two settings, `Solver` and `TimeDomainReductionFolder` take in text as input. To learn more about different solvers, read [here](https://github.com/GenXProject/GenX.jl/blob/main/docs/src/User_Guide/solver_configuration.md). For `TimeDomainReductionFolder`, specify the name of the directory you wish to see the results in. For a more comprehensive description of the input options, see the documentation linked above.
 
 To see how changing the settings affects the outputs, see Tutorials 3 and 7.
 
 Below is the settings file for `example_systems/1_three_zones`:
 
-```@raw html
-<img src="./files/genxsettings.png" align="center"/>
-```
+![png](./files/genxsettings.png)
 
-All `genx_settings.yml` files in `Example_Systems` specify most parameters. When configuring your own settings, however, it is not necessary to input all parameters as defaults are specified for each one in `configure_settings.jl`.
+All `genx_settings.yml` files in `example_systems` specify most parameters. When configuring your own settings, however, it is not necessary to input all parameters as defaults are specified for each one in `configure_settings.jl`.
 
-```@raw html
-<img src="./files/default_settings.png" align="center">
-```
+![png](./files/default_settings.png)
 
 To open `genx_settings.yml` in Jupyter, use the function `YAML.load(open(...))` and navigate to file in the desired directory:
 
@@ -69,11 +65,9 @@ YAML.write_file("example_systems/1_three_zones/settings/genx_settings.yml", new_
 
 The empty file will look like this:
 
-```@raw html
-<img src="./files/genx_settings_none.png" align="center">
-```
+![png](./files/genx_settings_none.png)
 
-Now, we run GenX and output the file `capacity.csv` from the `Results` folder. To do this, we use the function `include`, which takes a .jl file and runs it in jupyter notebook:
+Now, we run GenX and output the file `capacity.csv` from the `results` folder. To do this, we use the function `include`, which takes a .jl file and runs it in jupyter notebook:
 
 
 ```julia
